@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>旅遊分帳計算機</title>
+<style>
+:root{
+  --bg:#fff6dc; --ink:#14213d; --navy:#1d3a8a; --red:#d62839; --yellow:#ffd23f;
+  --muted:#4a5878; --line:#14213d; --paper:#ffffff; --pay:#d62839; --get:#1b7a3f; --accent:#d62839;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);background-color:var(--bg);
+  background-image:radial-gradient(rgba(214,40,57,.18) 1.6px,transparent 1.8px);background-size:16px 16px;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:720px;margin:0 auto;padding:32px 18px 64px}
+h1{font-size:2.8rem;font-weight:900;margin:0 0 18px;color:var(--navy);letter-spacing:.06em;
+  text-shadow:3px 3px 0 var(--yellow),5px 5px 0 var(--ink)}
+.sub{position:relative;display:inline-block;margin:0 0 36px;padding:12px 18px;background:#fff;
+  border:3px solid var(--ink);border-radius:20px;font-weight:700}
+.sub::after{content:"";position:absolute;left:28px;bottom:-16px;width:18px;height:18px;background:#fff;
+  border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg) skew(10deg,10deg)}
+h2{display:inline-block;font-size:1.15rem;font-weight:900;margin:0 0 14px;padding:3px 18px;
+  background:var(--navy);color:#fff;border:3px solid var(--ink);transform:skew(-8deg);box-shadow:4px 4px 0 var(--red)}
+section{margin-bottom:40px}
+input,select,button{font:inherit;color:inherit}
+input[type=text],input[type=number],select{
+  width:100%;padding:10px 12px;border:3px solid var(--ink);border-radius:10px;background:var(--paper)}
+:focus-visible{outline:4px solid var(--yellow);outline-offset:2px}
+button{cursor:pointer;border:3px solid var(--ink);background:var(--red);color:#fff;font-weight:700;
+  padding:9px 16px;border-radius:10px;box-shadow:3px 3px 0 var(--ink)}
+button:active{transform:translate(3px,3px);box-shadow:none}
+button.ghost{background:#fff;color:var(--ink)}
+button.small{padding:2px 10px;font-size:.85rem;box-shadow:2px 2px 0 var(--ink)}
+.row{display:flex;gap:10px}
+.row>input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 14px;font-weight:700;
+  background:var(--yellow);border:3px solid var(--ink);border-radius:999px}
+.chip button{background:none;border:none;box-shadow:none;color:var(--ink);padding:0 6px;font-size:1.2rem}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+label.f{display:block;font-size:.9rem;font-weight:700;color:var(--muted);margin:14px 0 4px}
+.modes{display:flex;gap:16px;margin-top:4px;font-weight:700}
+.people{display:grid;gap:8px;margin-top:6px}
+.person{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--paper);
+  border:3px solid var(--ink);border-radius:10px}
+.person span{flex:1}
+.person input[type=number]{width:110px;padding:5px 8px}
+.err{color:var(--pay);font-weight:700;min-height:1.4em;margin:10px 0 0}
+.actions{display:flex;gap:10px;margin-top:8px}
+.hint{color:var(--muted);font-size:.9rem}
+.exp{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;
+  padding:12px 14px;margin-bottom:10px;background:#fff;border:3px solid var(--ink);border-radius:6px;box-shadow:4px 4px 0 var(--ink)}
+.exp b{font-size:1.05rem}
+.exp .meta{color:var(--muted);font-size:.9rem}
+.exp .btns{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.amt{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{overflow-x:auto;background:#fff;border:3px solid var(--ink);border-radius:6px;box-shadow:4px 4px 0 var(--ink)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:2px solid var(--ink)}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--navy);color:#fff;font-size:.9rem}
+tr:last-child td{border-bottom:none}
+.pos{color:var(--get);font-weight:900}.neg{color:var(--pay);font-weight:900}
+.tickets{display:grid;gap:16px;margin-top:18px}
+.ticket{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:#fff;border:4px solid var(--ink);border-radius:4px;padding:14px 18px;box-shadow:6px 6px 0 var(--red)}
+.ticket:nth-child(even){transform:rotate(-.6deg)}
+.ticket:nth-child(odd){transform:rotate(.5deg)}
+.ticket .who{font-size:1.05rem}
+.ticket .who b{font-size:1.2rem;color:var(--navy)}
+.ticket .money{font-size:1.7rem;font-weight:900;color:var(--red);font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);padding:12px 0;font-weight:700}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}h1{font-size:2.1rem}}
+</style>
+</head>
+<body>
+<main>
+  <h1>旅遊分帳事件簿</h1>
+  <p class="sub">每一筆花費都是線索。交給我，馬上揭曉誰該轉給誰！</p>
+
+  <section>
+    <h2>旅伴</h2>
+    <div class="row">
+      <input type="text" id="memberName" placeholder="輸入名字，例如：小明" maxlength="12">
+      <button id="addMemberBtn">新增旅伴</button>
+    </div>
+    <p class="err" id="memberErr"></p>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section>
+    <h2 id="formTitle">新增花費</h2>
+    <p class="hint" id="needMembers">請先新增至少 2 位旅伴。</p>
+    <div id="formBody">
+      <div class="grid2">
+        <div><label class="f" for="title">品項</label>
+          <input type="text" id="title" placeholder="例如：晚餐、民宿" maxlength="30"></div>
+        <div><label class="f" for="amount">金額（元）</label>
+          <input type="number" id="amount" min="1" step="1" inputmode="numeric"></div>
+      </div>
+      <label class="f" for="payer">誰先付的錢</label>
+      <select id="payer"></select>
+      <label class="f">分攤方式</label>
+      <div class="modes">
+        <label><input type="radio" name="mode" value="equal" checked> 平均分</label>
+        <label><input type="radio" name="mode" value="custom"> 自訂金額</label>
+      </div>
+      <label class="f">分給誰
+        <button type="button" class="ghost small" id="allBtn">全選</button></label>
+      <div class="people" id="people"></div>
+      <p class="err" id="formErr"></p>
+      <div class="actions">
+        <button id="saveBtn">新增花費</button>
+        <button id="cancelBtn" class="ghost" hidden>取消修改</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>花費紀錄</h2>
+    <div id="list"></div>
+  </section>
+
+  <section>
+    <h2>真相揭曉：結算</h2>
+    <div id="result"></div>
+  </section>
+</main>
+
+<script>
+let members = [], expenses = [], uid = 1, editing = null;
+let draft = { payer: null, mode: 'equal', checked: new Set(), custom: {} };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => n.toLocaleString('zh-TW');
+const nameOf = id => (members.find(m => m.id === id) || {name:'?'}).name;
+
+/* ---------- 旅伴 ---------- */
+function addMember() {
+  const name = $('memberName').value.trim();
+  $('memberErr').textContent = '';
+  if (!name) return;
+  if (members.some(m => m.name === name)) { $('memberErr').textContent = '已經有同名的旅伴，請換個名字。'; return; }
+  const m = { id: uid++, name };
+  members.push(m);
+  draft.checked.add(m.id);
+  if (draft.payer === null) draft.payer = m.id;
+  $('memberName').value = '';
+  render();
+}
+function removeMember(id) {
+  const used = expenses.filter(e => e.payer === id || id in e.shares);
+  if (used.length && !confirm(nameOf(id) + ' 出現在 ' + used.length + ' 筆花費中，刪除後這些花費會一併移除。確定嗎？')) return;
+  expenses = expenses.filter(e => !used.includes(e));
+  if (editing && used.some(e => e.id === editing)) cancelEdit();
+  members = members.filter(m => m.id !== id);
+  draft.checked.delete(id); delete draft.custom[id];
+  if (draft.payer === id) draft.payer = members.length ? members[0].id : null;
+  render();
+}
+
+/* ---------- 表單 ---------- */
+function setMode(v) { draft.mode = v; renderPeople(); }
+function toggle(id) { draft.checked.has(id) ? draft.checked.delete(id) : draft.checked.add(id); renderPeople(); }
+function selectAll() { members.forEach(m => draft.checked.add(m.id)); renderPeople(); }
+
+function renderForm() {
+  const ok = members.length >= 2;
+  $('needMembers').hidden = ok;
+  $('formBody').hidden = !ok;
+  $('payer').innerHTML = members.map(m =>
+    `<option value="${m.id}" ${m.id === draft.payer ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  renderPeople();
+}
+function renderPeople() {
+  $('people').innerHTML = members.map(m => {
+    const on = draft.checked.has(m.id);
+    const input = draft.mode === 'custom' && on
+      ? `<input type="number" min="0" step="1" placeholder="金額" value="${draft.custom[m.id] ?? ''}"
+           oninput="draft.custom[${m.id}]=this.value" aria-label="${esc(m.name)} 的金額">` : '';
+    return `<div class="person"><input type="checkbox" id="p${m.id}" ${on ? 'checked' : ''} onchange="toggle(${m.id})">
+      <span><label for="p${m.id}">${esc(m.name)}</label></span>${input}</div>`;
+  }).join('');
+}
+
+function saveExpense() {
+  const err = t => { $('formErr').textContent = t; };
+  err('');
+  const title = $('title').value.trim();
+  const amount = Number($('amount').value);
+  if (!title) return err('請輸入品項名稱。');
+  if (!(amount > 0)) return err('金額必須大於 0。');
+  if (!Number.isInteger(amount)) return err('金額請輸入整數元。');
+  const ids = members.filter(m => draft.checked.has(m.id)).map(m => m.id);
+  if (!ids.length) return err('請至少勾選一位分攤的人。');
+
+  const shares = {};
+  if (draft.mode === 'equal') {
+    const base = Math.floor(amount / ids.length);
+    ids.forEach(id => shares[id] = base);
+    shares[ids[0]] += amount - base * ids.length;   // 零頭由第一位分攤者承擔
+  } else {
+    let sum = 0;
+    for (const id of ids) {
+      const v = Number(draft.custom[id] || 0);
+      if (!Number.isInteger(v) || v < 0) return err(nameOf(id) + ' 的金額請輸入 0 以上的整數。');
+      shares[id] = v; sum += v;
+    }
+    if (sum !== amount) return err('自訂金額加總為 ' + money(sum) + '，與總額 ' + money(amount) + ' 相差 ' + money(Math.abs(amount - sum)) + ' 元。');
+  }
+  const exp = { id: editing || uid++, title, amount, payer: draft.payer, mode: draft.mode, shares };
+  if (editing) expenses = expenses.map(e => e.id === editing ? exp : e); else expenses.push(exp);
+  cancelEdit();
+  render();
+}
+function editExpense(id) {
+  const e = expenses.find(x => x.id === id);
+  editing = id;
+  $('title').value = e.title; $('amount').value = e.amount;
+  draft = { payer: e.payer, mode: e.mode, checked: new Set(Object.keys(e.shares).map(Number)),
+            custom: e.mode === 'custom' ? { ...e.shares } : {} };
+  document.querySelector(`input[name=mode][value=${e.mode}]`).checked = true;
+  $('formTitle').textContent = '修改花費';
+  $('saveBtn').textContent = '儲存修改';
+  $('cancelBtn').hidden = false;
+  renderForm();
+  $('formTitle').scrollIntoView({ behavior: 'smooth' });
+}
+function cancelEdit() {
+  editing = null;
+  $('title').value = ''; $('amount').value = ''; $('formErr').textContent = '';
+  draft = { payer: members.length ? members[0].id : null, mode: 'equal',
+            checked: new Set(members.map(m => m.id)), custom: {} };
+  document.querySelector('input[name=mode][value=equal]').checked = true;
+  $('formTitle').textContent = '新增花費';
+  $('saveBtn').textContent = '新增花費';
+  $('cancelBtn').hidden = true;
+  renderForm();
+}
+function deleteExpense(id) {
+  if (!confirm('確定刪除這筆花費？')) return;
+  expenses = expenses.filter(e => e.id !== id);
+  if (editing === id) cancelEdit();
+  render();
+}
+
+/* ---------- 顯示 ---------- */
+function renderChips() {
+  $('chips').innerHTML = members.length ? members.map(m =>
+    `<span class="chip">${esc(m.name)}<button aria-label="刪除 ${esc(m.name)}" onclick="removeMember(${m.id})">×</button></span>`).join('')
+    : '<span class="hint">還沒有旅伴。</span>';
+}
+function renderList() {
+  $('list').innerHTML = expenses.length ? expenses.map(e => {
+    const who = Object.keys(e.shares).map(Number).map(nameOf).join('、');
+    return `<div class="exp"><div><b>${esc(e.title)}</b>
+      <div class="meta">${esc(nameOf(e.payer))} 先付 · ${e.mode === 'equal' ? '平均分給' : '自訂分給'} ${esc(who)}</div></div>
+      <div class="btns"><span class="amt"><b>${money(e.amount)}</b> 元</span>
+      <button class="ghost small" onclick="editExpense(${e.id})">編輯</button>
+      <button class="ghost small" onclick="deleteExpense(${e.id})">刪除</button></div></div>`;
+  }).join('') : '<p class="empty">還沒有花費。新增第一筆，結算就會出現在下方。</p>';
+}
+function settle() {
+  const paid = {}, owed = {};
+  members.forEach(m => { paid[m.id] = 0; owed[m.id] = 0; });
+  expenses.forEach(e => {
+    paid[e.payer] += e.amount;
+    for (const k in e.shares) owed[k] += e.shares[k];
+  });
+  const net = members.map(m => ({ id: m.id, paid: paid[m.id], owed: owed[m.id], net: paid[m.id] - owed[m.id] }));
+  const debtors = net.filter(n => n.net < 0).map(n => ({ id: n.id, amt: -n.net })).sort((a, b) => b.amt - a.amt);
+  const creditors = net.filter(n => n.net > 0).map(n => ({ id: n.id, amt: n.net })).sort((a, b) => b.amt - a.amt);
+  const transfers = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const t = Math.min(debtors[i].amt, creditors[j].amt);
+    transfers.push({ from: debtors[i].id, to: creditors[j].id, amt: t });
+    debtors[i].amt -= t; creditors[j].amt -= t;
+    if (debtors[i].amt === 0) i++;
+    if (creditors[j].amt === 0) j++;
+  }
+  return { net, transfers };
+}
+function renderResult() {
+  if (!expenses.length) { $('result').innerHTML = '<p class="empty">有花費之後，這裡會顯示每個人的收支與轉帳建議。</p>'; return; }
+  const { net, transfers } = settle();
+  const rows = net.map(n => `<tr><td>${esc(nameOf(n.id))}</td><td>${money(n.paid)}</td><td>${money(n.owed)}</td>
+    <td class="${n.net > 0 ? 'pos' : n.net < 0 ? 'neg' : ''}">${n.net > 0 ? '應收 ' : n.net < 0 ? '應付 ' : ''}${money(Math.abs(n.net))}</td></tr>`).join('');
+  const tickets = transfers.length ? transfers.map(t =>
+    `<div class="ticket"><div class="who"><b>${esc(nameOf(t.from))}</b> 轉給 <b>${esc(nameOf(t.to))}</b></div>
+     <div class="money">${money(t.amt)} 元</div></div>`).join('')
+    : '<p class="empty">大家剛好打平，不用轉帳。</p>';
+  $('result').innerHTML = `<div class="tablewrap"><table>
+    <thead><tr><th>旅伴</th><th>已付</th><th>應分攤</th><th>淨額</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h2 style="margin-top:28px">轉帳建議（共 ${transfers.length} 筆）</h2><div class="tickets">${tickets}</div>`;
+}
+function render() { renderChips(); renderForm(); renderList(); renderResult(); }
+
+/* ---------- 事件 ---------- */
+$('addMemberBtn').onclick = addMember;
+$('memberName').addEventListener('keydown', e => { if (e.key === 'Enter') addMember(); });
+$('payer').onchange = e => { draft.payer = Number(e.target.value); };
+$('allBtn').onclick = selectAll;
+$('saveBtn').onclick = saveExpense;
+$('cancelBtn').onclick = cancelEdit;
+document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = e => setMode(e.target.value));
+render();
+</script>
+</body>
+</html>
